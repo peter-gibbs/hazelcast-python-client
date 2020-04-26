@@ -17,7 +17,6 @@ from hazelcast.proxy import ProxyManager, MAP_SERVICE, QUEUE_SERVICE, LIST_SERVI
     TOPIC_SERVICE, RELIABLE_TOPIC_SERVICE, SEMAPHORE_SERVICE, LOCK_SERVICE, ID_GENERATOR_SERVICE, \
     ID_GENERATOR_ATOMIC_LONG_PREFIX, EXECUTOR_SERVICE, PN_COUNTER_SERVICE, FLAKE_ID_GENERATOR_SERVICE
 from hazelcast.near_cache import NearCacheManager
-from hazelcast.reactor import AsyncoreReactor
 from hazelcast.serialization import SerializationServiceV1
 from hazelcast.statistics import Statistics
 from hazelcast.transaction import TWO_PHASE, TransactionManager
@@ -43,7 +42,12 @@ class HazelcastClient(object):
         self._logger_extras = {"client_name": self.name, "group_name": self.config.group_config.name}
         self._log_group_password_info()
         self.lifecycle = LifecycleService(self.config, self._logger_extras)
-        self.reactor = AsyncoreReactor(self._logger_extras)
+        if 'gevent' in sys.modules:
+            from hazelcast.gevent_reactor import GeventReactor
+            self.reactor = GeventReactor()
+        else:
+            from hazelcast.reactor import AsyncoreReactor
+            self.reactor = AsyncoreReactor(self._logger_extras)
         self._address_providers = self._create_address_providers()
         self._address_translator = self._create_address_translator()
         self.connection_manager = ConnectionManager(self, self.reactor.new_connection, self._address_translator)

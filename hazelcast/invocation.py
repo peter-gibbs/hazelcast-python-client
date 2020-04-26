@@ -21,6 +21,7 @@ class Invocation(object):
     def __init__(self, invocation_service, request, partition_id=-1, address=None, connection=None, event_handler=None):
         self._event = threading.Event()
         self._invocation_timeout = invocation_service.invocation_timeout
+        self._client = invocation_service._client
         self.timeout = self._invocation_timeout + time.time()
         self.address = address
         self.connection = connection
@@ -40,12 +41,12 @@ class Invocation(object):
 
     def set_response(self, response):
         if self.timer:
-            self.timer.cancel()
+            self._client.reactor.stop_timer(self.timer)
         self.future.set_result(response)
 
     def set_exception(self, exception, traceback=None):
         if self.timer:
-            self.timer.cancel()
+            self._client.reactor.stop_timer(self.timer)
         self.future.set_exception(exception, traceback)
 
     def set_timeout(self, timeout):

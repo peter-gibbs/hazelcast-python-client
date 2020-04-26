@@ -79,6 +79,10 @@ class AsyncoreReactor(object):
     def add_timer(self, delay, callback):
         return self.add_timer_absolute(delay + time.time(), callback)
 
+    @staticmethod
+    def stop_timer(timer):
+        timer.cancel()
+
     def shutdown(self):
         if not self._is_live:
             return
